@@ -1,0 +1,9 @@
+# IDE settings
+/.vscode
+/.idea
+
+# logs
+/logs
+
+# data storages
+/storage
