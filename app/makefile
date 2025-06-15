@@ -30,11 +30,10 @@ create:
 	@echo " >>> Require advanced dependencies ..."
 	@composer require lexik/jwt-authentication-bundle --no-interaction
 	@composer require fakerphp/faker --no-interaction
-	@composer require orm-fixtures --dev --no-interaction
 	@composer require nesbot/carbon --no-interaction
-	@composer require davmixcool/php-sentiment-analyzer --no-interaction
-	@composer require --dev dama/doctrine-test-bundle --no-interaction
+	@composer require orm-fixtures --dev --no-interaction
 	@composer require --dev symfony/test-pack --no-interaction
+	@composer require --dev dama/doctrine-test-bundle --no-interaction
 	@echo " >>> DONE!"
 	@echo ""
 
@@ -53,6 +52,7 @@ setup:
 	@echo " >>>"
 	@echo " >>> Install dependencies ..."
 	@composer install --no-interaction
+	@composer require davmixcool/php-sentiment-analyzer --no-interaction
 	@echo " >>> DONE!"
 	@echo ""
 
@@ -64,10 +64,14 @@ configure:
 	@echo "JWT_TOKEN_TTL=$(TTL)" >> $(DIR_WEB_ROOT)/.env.local
 	@echo "FIXTURES_USERS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.local
 	@echo "FIXTURES_COMMENTS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.local
-	@echo "DATABASE_URL='pgsql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?serverVersion=$(DB_VERSION)&charset=utf8'" >> $(DIR_WEB_ROOT)/.env.test
-	@echo "JWT_TOKEN_TTL=$(TTL)" >> $(DIR_WEB_ROOT)/.env.test
-	@echo "FIXTURES_USERS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.test
-	@echo "FIXTURES_COMMENTS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.test
+	@echo "APP_ENV=dev" >> $(DIR_WEB_ROOT)/.env.local
+	@echo "KERNEL_CLASS='App\Kernel'" > $(DIR_WEB_ROOT)/.env.test.local
+	@echo "APP_SECRET='$ecretf0rt3st'" >> $(DIR_WEB_ROOT)/.env.test.local
+	@echo "DATABASE_URL='pgsql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?serverVersion=$(DB_VERSION)&charset=utf8'" >> $(DIR_WEB_ROOT)/.env.test.local
+	@echo "JWT_TOKEN_TTL=$(TTL)" >> $(DIR_WEB_ROOT)/.env.test.local
+	@echo "FIXTURES_USERS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.test.local
+	@echo "FIXTURES_COMMENTS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.test.local
+	@echo "APP_ENV=dev" >> $(DIR_WEB_ROOT)/.env.test.local
 	@symfony console lexik:jwt:generate-keypair --overwrite --no-interaction
 	@echo " >>> DONE!"
 	@echo ""
