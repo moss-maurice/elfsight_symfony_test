@@ -1,0 +1,170 @@
+<?php
+
+namespace App\Tests\Integration\Controller\Api\Episode;
+
+use App\Tests\Traits\AssertsTrait;
+use App\Tests\Traits\Custom\CommentsTrait;
+use App\Tests\Traits\Custom\EpisodesTrait;
+use App\Tests\Traits\Custom\UsersTrait;
+use App\Tests\Traits\DatabaseRefreshTrait;
+use Symfony\Bundle\FrameworkBundle\KernelBrowser;
+use Symfony\Bundle\FrameworkBundle\Test\WebTestCase;
+
+use Symfony\Component\HttpFoundation\Response;
+
+class EpisodeCommentsListControllerTest extends WebTestCase
+{
+    use DatabaseRefreshTrait;
+    use AssertsTrait;
+    use CommentsTrait;
+    use EpisodesTrait;
+    use UsersTrait;
+
+    private readonly KernelBrowser $client;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+
+        $this->client = static::createClient();
+
+        $this->refreshDatabase();
+    }
+
+    protected function tearDown(): void
+    {
+        parent::tearDown();
+    }
+
+    public function testEpisodeCommentsList(): void
+    {
+        $this->createEpisodes(1);
+        $this->createUsers(3);
+        $this->createComments(5);
+
+        $crawler = $this->client->request('GET', '/api/episode/1/comment');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+
+        $this->assertJson($this->client->getResponse()->getContent());
+
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertJsonStructure([
+            'items' => [
+                [
+                    'id',
+                    'user' => [
+                        'id',
+                        'email',
+                        'name',
+                    ],
+                    'comment',
+                    'sentiment',
+                    'pubDate',
+                ],
+            ],
+        ], $responseData);
+    }
+
+    public function testNotExistsEpisodeComments(): void
+    {
+        $this->createEpisodes(1);
+        $this->createUsers(3);
+        $this->createComments(5);
+
+        $crawler = $this->client->request('GET', '/api/episode/2/comment');
+
+        $this->assertResponseStatusCodeSame(404);
+
+        $this->assertJson($this->client->getResponse()->getContent());
+
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertArrayHasKey('message', $responseData);
+        $this->assertEquals('Episode not found', $responseData['message']);
+    }
+
+    public function testEpisodeWithoutComments(): void
+    {
+        $this->createEpisodes(1);
+
+        $this->client->request('GET', '/api/episode/1/comment');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertIsArray($responseData['items']);
+        $this->assertCount(0, $responseData['items']);
+    }
+
+    public function testEpisodeCommentsCounts(): void
+    {
+        $this->createEpisodes(1);
+        $this->createUsers(3);
+        $this->createComments(5);
+
+        $crawler = $this->client->request('GET', '/api/episode/1/comment');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+
+        $this->assertJson($this->client->getResponse()->getContent());
+
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertCount(15, $responseData['items']);
+    }
+
+    public function testEpisodeGoodSentiment(): void
+    {
+        $this->createEpisodes(1);
+        $this->createUsers(1);
+        $this->createComments(1, 'Great episode');
+
+        $crawler = $this->client->request('GET', '/api/episode/1/comment');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+
+        $this->assertJson($this->client->getResponse()->getContent());
+
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertGreaterThanOrEqual(0.5, $responseData['items'][0]['sentiment']);
+        $this->assertLessThanOrEqual(1, $responseData['items'][0]['sentiment']);
+    }
+
+    public function testEpisodeBadSentiment(): void
+    {
+        $this->createEpisodes(1);
+        $this->createUsers(1);
+        $this->createComments(1, 'Bad episode');
+
+        $crawler = $this->client->request('GET', '/api/episode/1/comment');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+
+        $this->assertJson($this->client->getResponse()->getContent());
+
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertGreaterThanOrEqual(0, $responseData['items'][0]['sentiment']);
+        $this->assertLessThanOrEqual(0.5, $responseData['items'][0]['sentiment']);
+    }
+
+    public function testEpisodeAverageSentiment(): void
+    {
+        $this->createEpisodes(1);
+        $this->createUsers(1);
+        $this->createComments(1, 'Average episode');
+
+        $crawler = $this->client->request('GET', '/api/episode/1/comment');
+
+        $this->assertResponseStatusCodeSame(Response::HTTP_OK);
+
+        $this->assertJson($this->client->getResponse()->getContent());
+
+        $responseData = json_decode($this->client->getResponse()->getContent(), true);
+
+        $this->assertEquals(0.5, $responseData['items'][0]['sentiment']);
+    }
+}

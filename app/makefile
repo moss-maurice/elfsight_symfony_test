@@ -64,14 +64,11 @@ configure:
 	@echo "JWT_TOKEN_TTL=$(TTL)" >> $(DIR_WEB_ROOT)/.env.local
 	@echo "FIXTURES_USERS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.local
 	@echo "FIXTURES_COMMENTS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.local
-	@echo "APP_ENV=dev" >> $(DIR_WEB_ROOT)/.env.local
-	@echo "KERNEL_CLASS='App\Kernel'" > $(DIR_WEB_ROOT)/.env.test.local
-	@echo "APP_SECRET='$ecretf0rt3st'" >> $(DIR_WEB_ROOT)/.env.test.local
+	@cp $(DIR_WEB_ROOT)/.env.test $(DIR_TMP)/.env.test.local
 	@echo "DATABASE_URL='pgsql://$(DB_USER):$(DB_PASSWORD)@$(DB_HOST):$(DB_PORT)/$(DB_NAME)?serverVersion=$(DB_VERSION)&charset=utf8'" >> $(DIR_WEB_ROOT)/.env.test.local
 	@echo "JWT_TOKEN_TTL=$(TTL)" >> $(DIR_WEB_ROOT)/.env.test.local
 	@echo "FIXTURES_USERS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.test.local
 	@echo "FIXTURES_COMMENTS_LIMIT=5" >> $(DIR_WEB_ROOT)/.env.test.local
-	@echo "APP_ENV=dev" >> $(DIR_WEB_ROOT)/.env.test.local
 	@symfony console lexik:jwt:generate-keypair --overwrite --no-interaction
 	@echo " >>> DONE!"
 	@echo ""

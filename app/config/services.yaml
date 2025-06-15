@@ -4,21 +4,88 @@
 # Put parameters here that don't need to change on each machine where the app is deployed
 # https://symfony.com/doc/current/best_practices.html#use-parameters-for-application-configuration
 parameters:
+    exceptions:
+        Symfony\Component\HttpKernel\Exception\NotFoundHttpException: { code: 404 }
+        App\Exception\RequestBodyConvertException: { code: 400, hidden: false }
+        App\Exception\User\AlreadyExistsException: { code: 409, hidden: false }
+        App\Exception\User\AlreadyLoggedException: { code: 409, hidden: false }
+        App\Exception\User\NotLoggedException: { code: 401, hidden: false }
+        App\Exception\User\NotCreatedException: { code: 400, hidden: false }
+        App\Exception\Episode\ParsingException: { code: 400, hidden: false }
+        App\Exception\Episode\NotFoundException: { code: 404, hidden: false }
+        App\Exception\Comment\NotCreatedException: { code: 400, hidden: false }
+        App\Exception\Comment\NotFoundException: { code: 404, hidden: false }
 
 services:
     # default configuration for services in *this* file
     _defaults:
-        autowire: true      # Automatically injects dependencies in your services.
+        autowire: true # Automatically injects dependencies in your services.
         autoconfigure: true # Automatically registers your services as commands, event subscribers, etc.
+        bind:
+            #    bool $isDebug: "%kernel.debug%"
+            bool $isDebug: false
 
     # makes classes in src/ available to be used as services
     # this creates a service per class whose id is the fully-qualified class name
     App\:
-        resource: '../src/'
+        resource: "../src/"
         exclude:
-            - '../src/DependencyInjection/'
-            - '../src/Entity/'
-            - '../src/Kernel.php'
+            - "../src/DependencyInjection/"
+            - "../src/Entity/"
+            - "../src/Kernel.php"
+
+    app.normalizer.object_normalizer:
+        class: Symfony\Component\Serializer\Normalizer\ObjectNormalizer
+        tags: ["serialize.normalizer"]
+        arguments:
+            $defaultContext:
+                circular_reference_handler: '@App\Serializer\CircularReferenceHandler'
+                ignored_attributes: ["insertedOn", "updatedOn"]
+
+    App\Exception\Handler\ExceptionMappingResolver:
+        arguments: ["%exceptions%"]
+
+    App\EventListener\OnJwtCreatedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "lexik_jwt_authentication.on_jwt_created" }
+
+    App\EventListener\OnExceptionListener:
+        tags:
+            - { name: "kernel.event_listener", event: "kernel.exception", priority: 10 }
+
+    App\EventListener\OnValidationExceptionListener:
+        tags:
+            - { name: "kernel.event_listener", event: "kernel.exception", priority: 15 }
+
+    App\EventListener\UserOnRegisteredListener:
+        tags:
+            - { name: "kernel.event_listener", event: "user.registered" }
+
+    App\EventListener\UserOnDeletedListener:
+        tags:
+            - { name: "kernel.event_listener", event: "user.deleted" }
+
+    App\Service\Cli\UsersService:
+        arguments:
+            $service: '@App\Service\UserService'
+
+    App\Service\EpisodeService: ~
+    App\Service\FakerService: ~
+    App\Service\SentimentAnalyzerService: ~
+    App\Service\Http\EpisodeService: ~
+
+    App\Service\Http\UserService:
+        arguments:
+            $service: '@App\Service\UserService'
+            $eventDispatcher: "@event_dispatcher"
+
+    App\Service\UserService:
+        arguments:
+            $repository: '@App\Repository\UserRepository'
+            $tokenStorage: "@security.token_storage"
+            $passwordHasher: "@security.user_password_hasher"
+            $entityManager: "@doctrine.orm.entity_manager"
+            $eventDispatcher: "@event_dispatcher"
 
     # add more service definitions when explicit configuration is needed
     # please note that last definitions always *replace* previous ones

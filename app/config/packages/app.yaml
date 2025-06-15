@@ -1,0 +1,3 @@
+parameters:
+    app.fixturesUsersLimit: "%env(FIXTURES_USERS_LIMIT)%"
+    app.fixturesCommentsLimit: "%env(FIXTURES_COMMENTS_LIMIT)%"
