@@ -1,6 +1,6 @@
 PROJECT_NAME=elfsight_test
 SYMFONY_VERSION=7.2.x
-DIR_TMP=/tmp/symfony
+DIR_TMP=/tmp
 DIR_WEB_ROOT=/var/www/html
 DB_NAME=pgsql_db
 DB_USER=pgsql_user
@@ -20,13 +20,13 @@ create:
 	@echo " >>> INITIALIZE NEW PROJECT ..."
 	@echo " >>>"
 	@echo " >>> Installing Symfony"
-	@rm -rf $(DIR_TMP)
-	@mkdir -p $(DIR_TMP)
-	@symfony new $(DIR_TMP) --version="$(SYMFONY_VERSION)" --webapp --no-interaction
+	@rm -rf $(DIR_TMP)/symfony
+	@mkdir -p $(DIR_TMP)/symfony
+	@symfony new $(DIR_TMP)/symfony --version="$(SYMFONY_VERSION)" --webapp --no-interaction
 	@echo " >>> Move Symfony in web-root"
-	@rm -rf $(DIR_TMP)/.git
-	@mv $(DIR_TMP)/* $(DIR_WEB_ROOT)
-	@mv $(DIR_TMP)/.[!.]* $(DIR_WEB_ROOT)
+	@rm -rf $(DIR_TMP)/symfony/.git
+	@mv $(DIR_TMP)/symfony/* $(DIR_WEB_ROOT)
+	@mv $(DIR_TMP)/symfony/.[!.]* $(DIR_WEB_ROOT)
 	@echo " >>> Require advanced dependencies ..."
 	@composer require lexik/jwt-authentication-bundle --no-interaction
 	@composer require fakerphp/faker --no-interaction
